@@ -1,4 +1,4 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useEffect } from 'react';
 import { FiChevronRight } from 'react-icons/fi';
 import api from '../../services/api';
 
@@ -20,7 +20,24 @@ const Dashboard: React.FunctionComponent = () => {
   const [newRepo, setNewRepo] = useState('');
   const [inputError, setInputError] = useState('');
 
-  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [repositories, setRepositories] = useState<Repository[]>(() => {
+    const storagedRepositories = localStorage.getItem(
+      '@GithubExplorer:repositories',
+    );
+    if (storagedRepositories) {
+      return JSON.parse(storagedRepositories);
+    } else {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(
+      '@GithubExplorer:repositories',
+      JSON.stringify(repositories),
+    );
+  }, [repositories]);
+
   async function handleAddRepository(
     event: FormEvent<HTMLFormElement>,
   ): Promise<void> {
@@ -30,11 +47,6 @@ const Dashboard: React.FunctionComponent = () => {
       return;
     }
 
-    /**
-     * Adicão de um novo repositório
-     * Consumir API do Github
-     * Salvar novo respositório no estado
-     */
     try {
       const response = await api.get<Repository>(`repos/${newRepo}`);
 
@@ -63,7 +75,7 @@ const Dashboard: React.FunctionComponent = () => {
         />
         <button type="submit"> Pesquisar</button>
       </Form>
-      {inputError && <Error>{inputError}</Error>}
+      <span>{inputError && <Error>{inputError}</Error>}</span>
       <Repositories>
         {repositories.map((repository) => (
           <a key={repository.full_name} href="teste">
